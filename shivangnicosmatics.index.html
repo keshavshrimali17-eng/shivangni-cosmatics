@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shivangni Cosmetics | Redefining Radiance</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts: Playfair Display (Serif/Luxury) & Montserrat (Sans/Modern) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Custom Configuration & Styles -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'shivangni-gold': '#D4AF37',
+                        'shivangni-gold-light': '#F3E5AB',
+                        'shivangni-black': '#121212',
+                        'shivangni-charcoal': '#1A1A1A',
+                        'shivangni-cream': '#F9F7F2',
+                        'shivangni-gray': '#888888',
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['"Montserrat"', 'sans-serif'],
+                    },
+                    backgroundImage: {
+                        'hero-pattern': "url('https://images.unsplash.com/photo-1596462502278-27bfdd403cc2?q=80&w=2574&auto=format&fit=crop')",
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Smooth Scrolling */
+        html { scroll-behavior: smooth; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #121212; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #D4AF37; }
+
+        /* Animations */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s ease-out, transform 1s ease-out;
+            will-change: opacity, visibility;
+        }
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: none;
+        }
+
+        /* Image Hover Zoom */
+        .product-card-img { transition: transform 0.7s ease; }
+        .product-card:hover .product-card-img { transform: scale(1.05); }
+
+        /* UI Elements Transitions */
+        .overlay-bg { transition: opacity 0.3s ease-in-out, visibility 0.3s; }
+        .drawer { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-content { transition: transform 0.3s ease-out, opacity 0.3s ease-out; }
+        
+        /* Toast Animation */
+        @keyframes slideUpFade {
+            0% { opacity: 0; transform: translate(-50%, 20px); }
+            10% { opacity: 1; transform: translate(-50%, 0); }
+            90% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -20px); }
+        }
+        .toast { animation: slideUpFade 3s forwards; }
+
+        /* Text Selection */
+        ::selection { background: #D4AF37; color: #fff; }
+
+        /* Filter Button Active State */
+        .filter-btn.active { color: #D4AF37; border-bottom: 2px solid #D4AF37; }
+    </style>
+</head>
+<body class="bg-shivangni-cream text-shivangni-charcoal font-sans antialiased overflow-x-hidden relative">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[110] pointer-events-none"></div>
+
+    <!-- Announcement Bar -->
+    <div class="bg-shivangni-black text-white text-[10px] md:text-xs font-bold uppercase tracking-widest text-center py-2 relative z-50">
+        Complimentary shipping on all orders above ₹5,000
+    </div>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-banner" class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-6 z-[100] transform translate-y-full transition-transform duration-500 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="text-sm text-gray-600 max-w-3xl">
+            <span class="font-serif text-shivangni-charcoal text-lg block mb-1">We value your privacy</span>
+            We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic. By clicking "Accept", you consent to our use of cookies.
+        </div>
+        <div class="flex gap-4">
+            <button onclick="acceptCookies()" class="bg-shivangni-black text-white px-8 py-3 text-xs uppercase tracking-widest font-bold hover:bg-shivangni-gold hover:text-black transition">Accept</button>
+            <button onclick="document.getElementById('cookie-banner').classList.add('translate-y-full')" class="text-xs uppercase tracking-widest font-bold text-gray-500 hover:text-black transition">Decline</button>
+        </div>
+    </div>
+
+    <!-- LOGIN / AUTH MODAL -->
+    <div id="auth-modal" class="overlay-bg fixed inset-0 z-[105] bg-black/60 backdrop-blur-sm opacity-0 invisible flex items-center justify-center p-4">
+        <div class="modal-content bg-white w-full max-w-md shadow-2xl relative transform scale-95 opacity-0">
+            <button onclick="toggleAuth()" class="absolute top-4 right-4 text-gray-400 hover:text-black"><i data-lucide="x" class="w-6 h-6"></i></button>
+            
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <h2 class="font-serif text-2xl mb-2">Welcome Back</h2>
+                    <p class="text-sm text-gray-500">Sign in to access your curated beauty profile.</p>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-200 mb-6">
+                    <button onclick="switchAuthTab('login')" id="tab-login" class="flex-1 pb-3 text-sm font-bold uppercase tracking-widest border-b-2 border-shivangni-black transition">Login</button>
+                    <button onclick="switchAuthTab('register')" id="tab-register" class="flex-1 pb-3 text-sm font-bold uppercase tracking-widest text-gray-400 transition hover:text-shivangni-black">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                    <input type="email" required placeholder="Email Address" class="w-full border border-gray-300 p-3 focus:outline-none focus:border-shivangni-gold">
+                    <input type="password" required placeholder="Password" class="w-full border border-gray-300 p-3 focus:outline-none focus:border-shivangni-gold">
+                    <button type="submit" class="w-full bg-shivangni-black text-white py-3 uppercase tracking-widest text-xs font-bold hover:bg-shivangni-gold hover:text-black transition">Sign In</button>
+                    <p class="text-center text-xs text-gray-400 cursor-pointer hover:text-black mt-2">Forgot Password?</p>
+                </form>
+
+                <!-- Register Form -->
+                <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+                    <input type="text" required id="reg-name" placeholder="Full Name" class="w-full border border-gray-300 p-3 focus:outline-none focus:border-shivangni-gold">
+                    <input type="email" required placeholder="Email Address" class="w-full border border-gray-300 p-3 focus:outline-none focus:border-shivangni-gold">
+                    <input type="password" required placeholder="Create Password" class="w-full border border-gray-300 p-3 focus:outline-none focus:border-shivangni-gold">
+                    <button type="submit" class="w-full bg-shivangni-black text-white py-3 uppercase tracking-widest text-xs font-bold hover:bg-shivangni-gold hover:text-black transition">Create Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUICK VIEW MODAL -->
+    <div id="quick-view-modal" class="overlay-bg fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm opacity-0 invisible flex items-center justify-center p-4">
+        <div id="quick-view-content" class="modal-content bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative grid grid-cols-1 md:grid-cols-2 transform scale-95 opacity-0">
+            <!-- Content Injected via JS -->
+        </div>
+    </div>
+
+    <!-- LEGAL POLICY MODAL -->
+    <div id="policy-modal" class="overlay-bg fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm opacity-0 invisible flex items-center justify-center p-4">
+        <div class="modal-content bg-white w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl relative transform scale-95 opacity-0">
+             <button onclick="closePolicy()" class="absolute top-4 right-4 text-gray-400 hover:text-black z-10"><i data-lucide="x" class="w-6 h-6"></i></button>
+             <div id="policy-content" class="p-8 md:p-12"></div>
+        </div>
+    </div>
+
+    <!-- SEARCH OVERLAY -->
+    <div id="search-overlay" class="overlay-bg fixed inset-0 bg-white/98 z-[90] opacity-0 invisible flex flex-col items-center pt-32 px-6">
+        <button onclick="toggleSearch()" class="absolute top-8 right-8 text-shivangni-charcoal hover:text-shivangni-gold transition transform hover:rotate-90 duration-300">
+            <i data-lucide="x" class="w-10 h-10"></i>
+        </button>
+        <div class="w-full max-w-3xl text-center mb-12">
+            <p class="text-shivangni-gold uppercase tracking-widest text-xs font-bold mb-4">Discover</p>
+            <input type="text" id="search-input" placeholder="Type to search..." autocomplete="off" class="w-full bg-transparent border-b-2 border-gray-200 text-3xl md:text-5xl font-serif text-shivangni-charcoal focus:outline-none focus:border-shivangni-gold py-4 text-center transition-colors">
+        </div>
+        <div id="search-results" class="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 overflow-y-auto max-h-[60vh] pb-20 px-4"></div>
+        <div id="no-results" class="hidden text-center text-gray-400 mt-10"><p class="font-serif text-xl">No treasures found.</p></div>
+    </div>
+
+    <!-- CHECKOUT OVERLAY -->
+    <div id="checkout-overlay" class="overlay-bg fixed inset-0 z-[95] bg-black/60 backdrop-blur-sm opacity-0 invisible flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative flex flex-col">
+            <button onclick="toggleCheckout(true)" class="absolute top-4 right-4 text-gray-400 hover:text-black"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-8 border-b border-gray-100 bg-shivangni-cream"><h2 class="font-serif text-2xl text-shivangni-charcoal">Secure Checkout</h2></div>
+            <form id="checkout-form" onsubmit="processPayment(event)" class="p-8 space-y-8">
+                <div>
+                    <h3 class="text-xs uppercase tracking-widest font-bold text-shivangni-gold mb-4">Shipping Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input required type="text" placeholder="Full Name" class="border border-gray-300 p-3 focus:outline-none focus:border-shivangni-gold">
+                        <input required type="text" placeholder="Phone Number" class="border border-gray-300 p-3 focus:outline-none focus:border-shivangni-gold">
+                        <input required type="text" placeholder="Address Line 1" class="col-span-1 md:col-span-2 border border-gray-300 p-3 focus:outline-none focus:border-shivangni-gold">
+                        <input required type="text" placeholder="City" class="border border-gray-300 p-3 focus:outline-none focus:border-shivangni-gold">
+                        <input required type="text" placeholder="Pincode" class="border border-gray-300 p-3 focus:outline-none focus:border-shivangni-gold">
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xs uppercase tracking-widest font-bold text-shivangni-gold mb-4">Payment Method</h3>
+                    <div class="space-y-3">
+                        <label class="block cursor-pointer">
+                            <input type="radio" name="payment" value="upi" class="hidden" checked>
+                            <div class="border border-gray-300 p-4 flex items-center gap-3 transition hover:border-gray-400"><i data-lucide="smartphone" class="w-5 h-5 text-shivangni-gold"></i><span>UPI (GPay / PhonePe / Paytm)</span></div>
+                        </label>
+                        <label class="block cursor-pointer">
+                            <input type="radio" name="payment" value="card" class="hidden">
+                            <div class="border border-gray-300 p-4 flex items-center gap-3 transition hover:border-gray-400"><i data-lucide="credit-card" class="w-5 h-5 text-shivangni-gold"></i><span>Credit / Debit Card</span></div>
+                        </label>
+                        <label class="block cursor-pointer">
+                            <input type="radio" name="payment" value="cod" class="hidden">
+                            <div class="border border-gray-300 p-4 flex items-center gap-3 transition hover:border-gray-400"><i data-lucide="package" class="w-5 h-5 text-shivangni-gold"></i><span>Cash on Delivery</span></div>
+                        </label>
+                    </div>
+                </div>
+                <div class="border-t border-gray-100 pt-6">
+                    <div class="flex justify-between items-center mb-6"><span class="text-gray-500">Total Amount</span><span id="checkout-total" class="font-serif text-2xl font-bold">₹0</span></div>
+                    <button type="submit" id="pay-btn" class="w-full bg-shivangni-black text-white py-4 uppercase tracking-widest text-xs font-bold hover:bg-shivangni-gold hover:text-black transition duration-300 flex justify-center items-center gap-2"><span>Place Order</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CART DRAWER -->
+    <div id="cart-overlay" class="overlay-bg fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm opacity-0 invisible" onclick="toggleCart()">
+        <div id="cart-drawer" class="drawer absolute top-0 right-0 w-full md:w-[450px] h-full bg-white shadow-2xl transform translate-x-full flex flex-col" onclick="event.stopPropagation()">
+            <div class="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-shivangni-cream">
+                <h2 class="font-serif text-2xl text-shivangni-charcoal">Your Collection</h2>
+                <button onclick="toggleCart()" class="text-shivangni-gray hover:text-shivangni-black transition"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto p-8 space-y-6"></div>
+            <div class="p-8 border-t border-gray-100 bg-shivangni-cream">
+                <div class="flex justify-between items-center mb-6"><span class="text-sm uppercase tracking-widest text-shivangni-gray">Subtotal</span><span id="cart-subtotal" class="font-serif text-xl">₹0.00</span></div>
+                <button onclick="toggleCheckout()" class="w-full bg-shivangni-black text-white py-4 uppercase tracking-widest text-xs font-bold hover:bg-shivangni-gold hover:text-black transition duration-300">Proceed to Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WISHLIST DRAWER -->
+    <div id="wishlist-overlay" class="overlay-bg fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm opacity-0 invisible" onclick="toggleWishlist()">
+        <div id="wishlist-drawer" class="drawer absolute top-0 right-0 w-full md:w-[400px] h-full bg-white shadow-2xl transform translate-x-full flex flex-col" onclick="event.stopPropagation()">
+            <div class="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-shivangni-cream">
+                <h2 class="font-serif text-2xl text-shivangni-charcoal">Your Wishlist</h2>
+                <button onclick="toggleWishlist()" class="text-shivangni-gray hover:text-shivangni-black transition"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div id="wishlist-items" class="flex-1 overflow-y-auto p-8 space-y-6"></div>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav id="navbar" class="fixed w-full z-40 transition-all duration-300 bg-transparent text-white top-8 md:top-8 py-6">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex justify-between items-center">
+            <button id="mobile-menu-btn" class="lg:hidden text-current hover:text-shivangni-gold transition"><i data-lucide="menu" class="w-6 h-6"></i></button>
+            <a href="#" class="text-2xl lg:text-3xl font-serif font-bold tracking-widest uppercase hover:text-shivangni-gold transition duration-300">Shivangni</a>
+            <div class="hidden lg:flex space-x-12 text-sm tracking-widest font-medium uppercase">
+                <a href="#collections" class="hover:text-shivangni-gold transition relative group">Collections<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-shivangni-gold transition-all group-hover:w-full"></span></a>
+                <a href="#reviews" class="hover:text-shivangni-gold transition relative group">Reviews<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-shivangni-gold transition-all group-hover:w-full"></span></a>
+                <a href="#concierge" class="hover:text-shivangni-gold transition relative group">Concierge<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-shivangni-gold transition-all group-hover:w-full"></span></a>
+            </div>
+            <div class="flex items-center space-x-6">
+                <button onclick="toggleSearch()" class="hover:text-shivangni-gold transition"><i data-lucide="search" class="w-5 h-5"></i></button>
+                <button onclick="toggleWishlist()" class="hover:text-shivangni-gold transition relative"><i data-lucide="heart" class="w-5 h-5"></i></button>
+                <button onclick="toggleAuth()" id="user-icon" class="hover:text-shivangni-gold transition relative" title="Login / Account"><i data-lucide="user" class="w-5 h-5"></i></button>
+                <button onclick="toggleCart()" class="hover:text-shivangni-gold transition relative">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    <span id="cart-count" class="absolute -top-1 -right-1 bg-shivangni-gold text-shivangni-black text-[10px] w-3 h-3 rounded-full flex items-center justify-center font-bold opacity-0 transition-opacity">0</span>
+                </button>
+            </div>
+        </div>
+        <div id="mobile-menu" class="fixed inset-0 bg-shivangni-black text-white transform -translate-x-full transition-transform duration-300 lg:hidden flex flex-col justify-center items-center space-y-8 z-50">
+            <button id="close-menu-btn" class="absolute top-6 right-6 text-white hover:text-shivangni-gold"><i data-lucide="x" class="w-8 h-8"></i></button>
+            <a href="#collections" class="text-2xl font-serif mobile-link hover:text-shivangni-gold">Collections</a>
+            <a href="#reviews" class="text-2xl font-serif mobile-link hover:text-shivangni-gold">Reviews</a>
+            <a href="#concierge" class="text-2xl font-serif mobile-link hover:text-shivangni-gold">Concierge</a>
+            <button onclick="toggleAuth(); document.getElementById('mobile-menu').classList.add('-translate-x-full')" class="text-2xl font-serif mobile-link hover:text-shivangni-gold">My Account</button>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <header class="relative h-screen flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 bg-hero-pattern bg-cover bg-center bg-no-repeat"><div class="absolute inset-0 bg-black/40"></div></div>
+        <div class="relative z-10 text-center px-4 fade-in-section is-visible">
+            <p class="text-shivangni-gold uppercase tracking-[0.3em] text-xs lg:text-sm mb-4">The Essence of Beauty</p>
+            <h1 class="text-white font-serif text-5xl md:text-7xl lg:text-8xl mb-6 italic">Redefining <br/> <span class="not-italic">Radiance</span></h1>
+            <p class="text-gray-200 font-light max-w-lg mx-auto mb-10 text-sm md:text-base leading-relaxed">Experience the perfect blend of nature and luxury with Shivangni's exclusive collection of artisanal cosmetics.</p>
+            <a href="#collections" class="inline-block border border-white text-white px-10 py-4 text-sm uppercase tracking-widest hover:bg-white hover:text-shivangni-black transition duration-300">Shop The Collection</a>
+        </div>
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-white animate-bounce"><i data-lucide="chevron-down" class="w-6 h-6 opacity-70"></i></div>
+    </header>
+
+    <!-- PHILOSOPHY -->
+    <section id="about" class="py-24 md:py-32 bg-shivangni-cream text-center px-6">
+        <div class="max-w-3xl mx-auto fade-in-section">
+            <span class="block w-px h-16 bg-shivangni-gold mx-auto mb-8"></span>
+            <h2 class="text-3xl md:text-4xl font-serif mb-6 text-shivangni-charcoal">Curated for the Extraordinary</h2>
+            <p class="text-shivangni-gray font-light leading-8 text-lg">At <span class="text-shivangni-charcoal font-serif italic">Shivangni</span>, we believe beauty is an art form. Our formulas are crafted with the rarest botanical ingredients, designed not just to enhance, but to honor your skin.</p>
+            <div class="mt-10"><div class="font-serif italic text-4xl text-shivangni-gold opacity-50">Shivangni</div></div>
+        </div>
+    </section>
+
+    <!-- COLLECTIONS -->
+    <section id="collections" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="text-center mb-12 fade-in-section">
+                <h3 class="text-shivangni-gold uppercase tracking-widest text-xs font-bold mb-2">New Arrivals</h3>
+                <h2 class="text-4xl font-serif text-shivangni-charcoal mb-8">The Essentials</h2>
+                <div class="flex flex-wrap justify-center gap-4 md:gap-8 text-xs md:text-sm uppercase tracking-widest">
+                    <button onclick="filterProducts('all')" class="filter-btn active hover:text-shivangni-gold transition pb-1" data-filter="all">All</button>
+                    <button onclick="filterProducts('face')" class="filter-btn text-gray-400 hover:text-shivangni-gold transition pb-1" data-filter="face">Face</button>
+                    <button onclick="filterProducts('eyes')" class="filter-btn text-gray-400 hover:text-shivangni-gold transition pb-1" data-filter="eyes">Eyes</button>
+                    <button onclick="filterProducts('lips')" class="filter-btn text-gray-400 hover:text-shivangni-gold transition pb-1" data-filter="lips">Lips</button>
+                </div>
+            </div>
+            <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16"></div>
+        </div>
+    </section>
+
+    <!-- REVIEWS -->
+    <section id="reviews" class="py-24 bg-shivangni-cream border-t border-gray-200">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="text-center mb-16 fade-in-section">
+                <i data-lucide="quote" class="w-8 h-8 mx-auto text-shivangni-gold mb-4 fill-current"></i>
+                <h2 class="text-3xl md:text-4xl font-serif text-shivangni-charcoal">Voices of Radiance</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+                <div class="fade-in-section bg-white p-8 shadow-sm">
+                    <div class="flex justify-center mb-4 text-shivangni-gold"><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i></div>
+                    <p class="font-serif italic text-lg mb-6 leading-relaxed">"The Velvet Elixir is nothing short of a miracle. My skin has never felt this luxurious. Truly the gold standard of Indian beauty."</p>
+                    <p class="text-xs uppercase tracking-widest font-bold">Ananya R.</p><p class="text-[10px] text-gray-400 mt-1">Mumbai</p>
+                </div>
+                <div class="fade-in-section bg-white p-8 shadow-sm">
+                    <div class="flex justify-center mb-4 text-shivangni-gold"><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i></div>
+                    <p class="font-serif italic text-lg mb-6 leading-relaxed">"The packaging, the texture, the scent—everything screams elegance. The Gold Dust highlighter gives me that perfect wedding glow."</p>
+                    <p class="text-xs uppercase tracking-widest font-bold">Priya S.</p><p class="text-[10px] text-gray-400 mt-1">Delhi</p>
+                </div>
+                <div class="fade-in-section bg-white p-8 shadow-sm">
+                    <div class="flex justify-center mb-4 text-shivangni-gold"><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i></div>
+                    <p class="font-serif italic text-lg mb-6 leading-relaxed">"Finally, a luxury brand that understands Indian skin tones. Midnight Rose is my go-to lipstick for every occasion."</p>
+                    <p class="text-xs uppercase tracking-widest font-bold">Meera K.</p><p class="text-[10px] text-gray-400 mt-1">Bangalore</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONCIERGE -->
+    <section id="concierge" class="py-20 bg-shivangni-charcoal text-white">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div class="fade-in-section">
+                <h2 class="text-3xl md:text-4xl font-serif mb-4">The Concierge</h2>
+                <p class="text-gray-400 font-light mb-8">Personalized assistance for your journey to radiance.</p>
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4"><div class="p-3 border border-shivangni-gold rounded-full"><i data-lucide="phone" class="w-5 h-5 text-shivangni-gold"></i></div><div><h4 class="text-lg font-serif mb-1">Call Us</h4><p class="text-sm text-gray-400">+91 98765 43210</p><p class="text-[10px] text-gray-500 uppercase tracking-wider mt-1">Mon-Sat, 10am - 7pm IST</p></div></div>
+                    <div class="flex items-start gap-4"><div class="p-3 border border-shivangni-gold rounded-full"><i data-lucide="mail" class="w-5 h-5 text-shivangni-gold"></i></div><div><h4 class="text-lg font-serif mb-1">Email Support</h4><p class="text-sm text-gray-400">concierge@shivangni.com</p><p class="text-[10px] text-gray-500 uppercase tracking-wider mt-1">Response within 24 hours</p></div></div>
+                    <div class="flex items-start gap-4"><div class="p-3 border border-shivangni-gold rounded-full"><i data-lucide="map-pin" class="w-5 h-5 text-shivangni-gold"></i></div><div><h4 class="text-lg font-serif mb-1">Flagship Boutique</h4><p class="text-sm text-gray-400">12, Khan Market, New Delhi, India</p></div></div>
+                </div>
+            </div>
+            <div class="fade-in-section"><img src="https://images.unsplash.com/photo-1556228720-1987556488d0?q=80&w=1887&auto=format&fit=crop" alt="Concierge" class="w-full h-[400px] object-cover filter brightness-75 border border-shivangni-gold p-2"></div>
+        </div>
+    </section>
+
+    <!-- NEWSLETTER -->
+    <section class="py-20 bg-white border-t border-gray-100">
+        <div class="max-w-xl mx-auto px-6 text-center fade-in-section">
+            <h2 class="text-3xl font-serif mb-4 text-shivangni-charcoal">The Inner Circle</h2>
+            <p class="text-gray-500 font-light mb-8">Join for exclusive access to new drops, private sales, and beauty secrets.</p>
+            <form onsubmit="subscribeNewsletter(event)" class="flex flex-col md:flex-row gap-4">
+                <input type="email" required placeholder="Your Email Address" class="flex-1 bg-transparent border-b border-gray-300 py-2 focus:outline-none focus:border-shivangni-gold transition text-shivangni-charcoal">
+                <button type="submit" class="bg-shivangni-black text-white px-8 py-3 text-xs uppercase tracking-widest font-bold hover:bg-shivangni-gold hover:text-black transition duration-300">Subscribe</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-shivangni-cream pt-20 pb-10 px-6 border-t border-gray-200">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 text-center md:text-left">
+             <div class="md:col-span-1">
+                <a href="#" class="text-2xl font-serif font-bold tracking-widest uppercase block mb-6">Shivangni</a>
+                <p class="text-xs text-shivangni-gray leading-relaxed">Luxury is not a price point. It is a feeling.</p>
+             </div>
+             <div>
+                 <h4 class="uppercase text-xs font-bold tracking-widest mb-6">Shop</h4>
+                 <ul class="space-y-3 text-sm text-gray-500 font-light">
+                     <li><a href="#" class="hover:text-black">All Collections</a></li>
+                     <li><a href="#" class="hover:text-black">Best Sellers</a></li>
+                     <li><a href="#" class="hover:text-black">Gift Sets</a></li>
+                 </ul>
+             </div>
+             <div>
+                 <h4 class="uppercase text-xs font-bold tracking-widest mb-6">Policies</h4>
+                 <ul class="space-y-3 text-sm text-gray-500 font-light">
+                     <li><button onclick="openPolicy('shipping')" class="hover:text-black">Shipping Policy</button></li>
+                     <li><button onclick="openPolicy('returns')" class="hover:text-black">Returns & Refunds</button></li>
+                     <li><button onclick="openPolicy('privacy')" class="hover:text-black">Privacy Policy</button></li>
+                 </ul>
+             </div>
+             <div>
+                 <h4 class="uppercase text-xs font-bold tracking-widest mb-6">Follow Us</h4>
+                 <div class="flex justify-center md:justify-start space-x-6">
+                    <i data-lucide="instagram" class="w-5 h-5 text-gray-400 hover:text-shivangni-gold cursor-pointer transition"></i>
+                    <i data-lucide="facebook" class="w-5 h-5 text-gray-400 hover:text-shivangni-gold cursor-pointer transition"></i>
+                    <i data-lucide="twitter" class="w-5 h-5 text-gray-400 hover:text-shivangni-gold cursor-pointer transition"></i>
+                 </div>
+             </div>
+        </div>
+        <div class="max-w-7xl mx-auto text-center pt-8 border-t border-gray-200">
+            <p class="text-[10px] uppercase text-gray-400 tracking-widest">© 2023 Shivangni Cosmetics.</p>
+        </div>
+    </footer>
+
+    <!-- SCRIPTS -->
+    <script>
+        // --- 1. Enhanced Product Data ---
+        const products = [
+            { 
+                id: 1, 
+                name: "Velvet Elixir", 
+                category: 'face', 
+                desc: "Hydrating Serum", 
+                price: 3500, 
+                image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1887&auto=format&fit=crop", 
+                delay: 0,
+                ingredients: "Pure Himalayan Saffron, 24k Gold Flakes, Sandalwood Oil, Hyaluronic Acid.",
+                usage: "Apply 2-3 drops on damp skin. Gently massage in upward circular motions until fully absorbed."
+            },
+            { 
+                id: 2, 
+                name: "Gold Dust", 
+                category: 'face', 
+                desc: "Illuminating Powder", 
+                price: 6200, 
+                image: "https://images.unsplash.com/photo-1596462502278-27bfdd403cc2?q=80&w=2574&auto=format&fit=crop", 
+                delay: 100,
+                ingredients: "Crushed Pearl Extract, Mica, Jojoba Oil, Vitamin E.",
+                usage: "Dust lightly over cheekbones, brow bone, and cupid's bow for an ethereal glow."
+            },
+            { 
+                id: 3, 
+                name: "Midnight Rose", 
+                category: 'lips', 
+                desc: "Matte Lipstick", 
+                price: 2400, 
+                image: "https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?q=80&w=1887&auto=format&fit=crop", 
+                delay: 200,
+                ingredients: "Rose Oil, Shea Butter, Beeswax, Natural Mineral Pigments.",
+                usage: "Exfoliate lips before use. Apply directly from the bullet for full coverage."
+            },
+            { 
+                id: 4, 
+                name: "Celestial Mist", 
+                category: 'face', 
+                desc: "Facial Toner", 
+                price: 1800, 
+                image: "https://images.unsplash.com/photo-1608248597279-f99d160bfbc8?q=80&w=2670&auto=format&fit=crop", 
+                delay: 0,
+                ingredients: "Rose Water, Aloe Vera, Cucumber Extract, Witch Hazel.",
+                usage: "Spritz onto face after cleansing or anytime throughout the day for a hydration boost."
+            },
+            { 
+                id: 5, 
+                name: "Obsidian Liner", 
+                category: 'eyes', 
+                desc: "Precision Eye Pencil", 
+                price: 1500, 
+                image: "https://images.unsplash.com/photo-1631214503851-a51e0cc815d9?q=80&w=2670&auto=format&fit=crop", 
+                delay: 100,
+                ingredients: "Carbon Black, Castor Oil, Carnauba Wax.",
+                usage: "Glide along the lash line. Smudge immediately for a smokey look or let set for a crisp line."
+            }
+        ];
+
+        // Format Currency Helper
+        function formatPrice(price) { return '₹' + price.toLocaleString('en-IN'); }
+
+        // --- 2. State Management ---
+        let cart = JSON.parse(localStorage.getItem('shivangniCart')) || [];
+        let wishlist = JSON.parse(localStorage.getItem('shivangniWishlist')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('shivangniUser')) || null;
+
+        function saveData() {
+            localStorage.setItem('shivangniCart', JSON.stringify(cart));
+            localStorage.setItem('shivangniWishlist', JSON.stringify(wishlist));
+            updateUI();
+        }
+
+        // --- 3. Render Functions ---
+        function createProductCard(product, isSearchResult = false) {
+            const delayStyle = isSearchResult ? '' : `style="transition-delay: ${product.delay}ms;"`;
+            const cssClass = isSearchResult ? 'group product-card relative' : 'group product-card relative fade-in-section';
+            const isWishlisted = wishlist.includes(product.id);
+            const heartFill = isWishlisted ? 'fill-shivangni-gold text-shivangni-gold' : 'text-gray-400 hover:text-shivangni-gold';
+
+            return `
+                <div class="${cssClass}" ${delayStyle}>
+                    <button onclick="toggleWishlistItem(${product.id})" class="absolute top-4 right-4 z-20 p-2 bg-white/80 backdrop-blur rounded-full transition transform hover:scale-110">
+                        <i data-lucide="heart" class="w-4 h-4 ${heartFill}"></i>
+                    </button>
+                    <div class="relative overflow-hidden h-96 bg-gray-100 mb-6 cursor-pointer" onclick="openQuickView(${product.id})">
+                        <img src="${product.image}" alt="${product.name}" class="product-card-img w-full h-full object-cover">
+                        <div class="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-sm p-4 translate-y-full group-hover:translate-y-0 transition duration-300 flex justify-between items-center hover:bg-shivangni-gold hover:text-white z-10">
+                            <span class="uppercase text-xs tracking-wider font-bold">Quick View</span>
+                            <span class="font-serif">${formatPrice(product.price)}</span>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <h4 class="font-serif text-xl mb-1 group-hover:text-shivangni-gold transition cursor-pointer" onclick="openQuickView(${product.id})">${product.name}</h4>
+                        <p class="text-xs text-shivangni-gray uppercase tracking-wider">${product.desc}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMainGrid(category = 'all') {
+            const grid = document.getElementById('products-grid');
+            const filteredProducts = category === 'all' ? products : products.filter(p => p.category === category);
+            grid.innerHTML = filteredProducts.map(p => createProductCard(p)).join('');
+            lucide.createIcons();
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('is-visible'); });
+            }, { threshold: 0.1 });
+            grid.querySelectorAll('.fade-in-section').forEach(section => observer.observe(section));
+        }
+
+        // --- 4. Wishlist Logic ---
+        function toggleWishlistItem(id) {
+            if(wishlist.includes(id)) {
+                wishlist = wishlist.filter(itemId => itemId !== id);
+                showToast("Removed from Wishlist");
+            } else {
+                wishlist.push(id);
+                showToast("Added to Wishlist");
+            }
+            saveData();
+            // Re-render current view to update hearts
+            renderMainGrid(); 
+            // If wishlist drawer is open, re-render it
+            renderWishlistDrawer();
+        }
+
+        function renderWishlistDrawer() {
+            const container = document.getElementById('wishlist-items');
+            if (wishlist.length === 0) {
+                container.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-center opacity-50"><p class="font-serif italic text-lg mb-2">Your wishlist is empty.</p></div>`;
+                return;
+            }
+            
+            const wishProducts = products.filter(p => wishlist.includes(p.id));
+            container.innerHTML = wishProducts.map(item => `
+                <div class="flex gap-4 items-center border-b border-gray-100 pb-4">
+                    <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover bg-gray-100">
+                    <div class="flex-1">
+                        <h4 class="font-serif text-lg text-shivangni-charcoal">${item.name}</h4>
+                        <p class="text-xs text-shivangni-gray mb-2">${formatPrice(item.price)}</p>
+                        <button onclick="moveToCartFromWishlist(${item.id})" class="text-[10px] uppercase font-bold underline hover:text-shivangni-gold">Move to Cart</button>
+                    </div>
+                    <button onclick="toggleWishlistItem(${item.id})" class="text-gray-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function moveToCartFromWishlist(id) {
+            addToCart(id);
+            toggleWishlistItem(id); // Remove from wishlist
+        }
+
+        function toggleWishlist() {
+            const overlay = document.getElementById('wishlist-overlay');
+            const drawer = document.getElementById('wishlist-drawer');
+            if (overlay.classList.contains('invisible')) {
+                renderWishlistDrawer();
+                overlay.classList.remove('invisible', 'opacity-0');
+                drawer.classList.remove('translate-x-full');
+            } else {
+                drawer.classList.add('translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('invisible'), 300);
+            }
+        }
+
+        // --- 5. Quick View Logic ---
+        function openQuickView(id) {
+            const product = products.find(p => p.id === id);
+            const modal = document.getElementById('quick-view-modal');
+            const content = document.getElementById('quick-view-content');
+            
+            content.innerHTML = `
+                <div class="h-64 md:h-full relative bg-gray-100">
+                    <img src="${product.image}" class="w-full h-full object-cover">
+                    <button onclick="document.getElementById('quick-view-modal').classList.add('invisible', 'opacity-0')" class="absolute top-4 left-4 bg-white/80 p-2 rounded-full md:hidden"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <div class="p-8 md:p-12 flex flex-col h-full relative">
+                     <button onclick="document.getElementById('quick-view-modal').classList.add('invisible', 'opacity-0')" class="absolute top-4 right-4 hidden md:block text-gray-400 hover:text-black"><i data-lucide="x" class="w-6 h-6"></i></button>
+                    
+                    <h2 class="font-serif text-3xl mb-2">${product.name}</h2>
+                    <p class="text-shivangni-gold text-xl font-serif mb-6">${formatPrice(product.price)}</p>
+                    
+                    <div class="space-y-6 flex-1 overflow-y-auto pr-2">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-widest mb-2">Description</h4>
+                            <p class="text-sm text-gray-600 font-light leading-relaxed">${product.desc}. An artisanal blend designed to provide a luxurious experience.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-widest mb-2">Key Ingredients</h4>
+                            <p class="text-sm text-gray-600 font-light leading-relaxed">${product.ingredients}</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-widest mb-2">Ritual</h4>
+                            <p class="text-sm text-gray-600 font-light leading-relaxed">${product.usage}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 pt-6 border-t border-gray-100 flex gap-4">
+                        <button onclick="addToCart(${product.id}); document.getElementById('quick-view-modal').classList.add('invisible', 'opacity-0')" class="flex-1 bg-shivangni-black text-white py-4 uppercase tracking-widest text-xs font-bold hover:bg-shivangni-gold hover:text-black transition">Add to Cart</button>
+                        <button onclick="toggleWishlistItem(${product.id})" class="p-4 border border-gray-200 hover:border-shivangni-gold hover:text-shivangni-gold transition"><i data-lucide="heart" class="w-5 h-5"></i></button>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('invisible', 'opacity-0');
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+            lucide.createIcons();
+        }
+
+        // --- 6. Auth Logic (Simulated) ---
+        function toggleAuth() {
+            const modal = document.getElementById('auth-modal');
+            const content = modal.querySelector('.modal-content');
+            
+            if (currentUser) {
+                // If logged in, maybe show logout prompt or profile? For now, let's just logout.
+                if(confirm(`Logged in as ${currentUser.name}. Do you want to logout?`)) {
+                    currentUser = null;
+                    localStorage.removeItem('shivangniUser');
+                    updateUI();
+                    showToast("Logged out successfully");
+                }
+                return;
+            }
+
+            if (modal.classList.contains('invisible')) {
+                modal.classList.remove('invisible', 'opacity-0');
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            } else {
+                modal.classList.add('opacity-0');
+                setTimeout(() => modal.classList.add('invisible'), 300);
+            }
+        }
+
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('form-login');
+            const registerForm = document.getElementById('form-register');
+            const loginTab = document.getElementById('tab-login');
+            const registerTab = document.getElementById('tab-register');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                loginTab.classList.replace('text-gray-400', 'border-b-2');
+                loginTab.classList.add('border-shivangni-black');
+                registerTab.classList.replace('border-b-2', 'text-gray-400');
+                registerTab.classList.remove('border-shivangni-black');
+            } else {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                registerTab.classList.replace('text-gray-400', 'border-b-2');
+                registerTab.classList.add('border-shivangni-black');
+                loginTab.classList.replace('border-b-2', 'text-gray-400');
+                loginTab.classList.remove('border-shivangni-black');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            // Mock Login
+            currentUser = { name: "Guest User", email: "guest@example.com" };
+            localStorage.setItem('shivangniUser', JSON.stringify(currentUser));
+            toggleAuth(); // close modal
+            updateUI();
+            showToast(`Welcome back, ${currentUser.name}`);
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            currentUser = { name: name, email: "new@example.com" };
+            localStorage.setItem('shivangniUser', JSON.stringify(currentUser));
+            toggleAuth(); // close modal
+            updateUI();
+            showToast(`Welcome to Shivangni, ${name}`);
+        }
+
+        function updateUI() {
+            // Update User Icon
+            const icon = document.getElementById('user-icon');
+            if (currentUser) {
+                icon.innerHTML = `<span class="text-xs font-bold border border-white rounded-full w-6 h-6 flex items-center justify-center bg-shivangni-gold text-black">${currentUser.name.charAt(0)}</span>`;
+                icon.title = currentUser.name;
+            } else {
+                icon.innerHTML = `<i data-lucide="user" class="w-5 h-5"></i>`;
+                icon.title = "Login / Account";
+                lucide.createIcons();
+            }
+            // Update Cart Count
+            const cartCountEl = document.getElementById('cart-count');
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCountEl.textContent = totalItems;
+            cartCountEl.style.opacity = totalItems > 0 ? '1' : '0';
+        }
+
+        // --- 7. Policy Logic ---
+        const policies = {
+            shipping: { title: "Shipping Policy", content: "<p class='mb-4'>We offer complimentary shipping on all orders above ₹5,000.</p><p class='mb-4'><strong>Standard Delivery:</strong> 3-5 business days.</p><p><strong>Express Delivery:</strong> 1-2 business days (Extra charges apply).</p>" },
+            returns: { title: "Returns & Refunds", content: "<p class='mb-4'>We accept returns within 14 days of delivery for unopened products.</p><p>To initiate a return, please contact our concierge team. Refunds are processed within 7-10 business days to the original payment method.</p>" },
+            privacy: { title: "Privacy Policy", content: "<p class='mb-4'>Your privacy is paramount. We do not sell or trade your personal information.</p><p>We use industry-standard encryption to protect your data during transmission and storage.</p>" }
+        };
+
+        function openPolicy(type) {
+            const modal = document.getElementById('policy-modal');
+            const contentDiv = document.getElementById('policy-content');
+            const policy = policies[type];
+            
+            contentDiv.innerHTML = `
+                <h2 class="font-serif text-3xl mb-6 text-center">${policy.title}</h2>
+                <div class="text-sm text-gray-600 leading-loose font-light">${policy.content}</div>
+            `;
+            
+            modal.classList.remove('invisible', 'opacity-0');
+            modal.querySelector('.modal-content').classList.remove('scale-95', 'opacity-0');
+        }
+
+        function closePolicy() {
+            const modal = document.getElementById('policy-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('invisible'), 300);
+        }
+
+        // --- 8. Cookie Logic ---
+        function checkCookies() {
+            if (!localStorage.getItem('shivangniCookies')) {
+                setTimeout(() => document.getElementById('cookie-banner').classList.remove('translate-y-full'), 2000);
+            }
+        }
+        function acceptCookies() {
+            localStorage.setItem('shivangniCookies', 'true');
+            document.getElementById('cookie-banner').classList.add('translate-y-full');
+        }
+
+        // --- 9. Cart & Checkout (Existing Logic Preserved) ---
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            const existingItem = cart.find(item => item.id === id);
+            if (existingItem) existingItem.quantity += 1; else cart.push({ ...product, quantity: 1 });
+            saveData();
+            showToast(`Added ${product.name} to Cart`);
+            // Update drawer UI
+            const cartItemsEl = document.getElementById('cart-items');
+            const cartSubtotalEl = document.getElementById('cart-subtotal');
+            renderCartItems(cartItemsEl, cartSubtotalEl);
+            // Open drawer
+            const overlay = document.getElementById('cart-overlay');
+            if(overlay.classList.contains('invisible')) toggleCart();
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            saveData();
+            const cartItemsEl = document.getElementById('cart-items');
+            const cartSubtotalEl = document.getElementById('cart-subtotal');
+            renderCartItems(cartItemsEl, cartSubtotalEl);
+        }
+
+        function renderCartItems(container, subtotalEl) {
+             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+             subtotalEl.textContent = formatPrice(subtotal);
+             
+             if (cart.length === 0) {
+                 container.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-center opacity-50"><p class="font-serif italic text-lg mb-2">Your bag is empty.</p></div>`;
+             } else {
+                 container.innerHTML = cart.map(item => `
+                     <div class="flex gap-4 items-center border-b border-gray-100 pb-4">
+                         <img src="${item.image}" class="w-16 h-16 object-cover bg-gray-100">
+                         <div class="flex-1">
+                             <h4 class="font-serif text-lg text-shivangni-charcoal">${item.name}</h4>
+                             <p class="text-xs text-shivangni-gray">${formatPrice(item.price)} x ${item.quantity}</p>
+                         </div>
+                         <button onclick="removeFromCart(${item.id})" class="text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                     </div>
+                 `).join('');
+                 lucide.createIcons();
+             }
+        }
+
+        function toggleCart() {
+             const overlay = document.getElementById('cart-overlay');
+             const drawer = document.getElementById('cart-drawer');
+             if (overlay.classList.contains('invisible')) {
+                 renderCartItems(document.getElementById('cart-items'), document.getElementById('cart-subtotal'));
+                 overlay.classList.remove('invisible', 'opacity-0');
+                 drawer.classList.remove('translate-x-full');
+             } else {
+                 drawer.classList.add('translate-x-full');
+                 overlay.classList.add('opacity-0');
+                 setTimeout(() => overlay.classList.add('invisible'), 300);
+             }
+        }
+        
+        function toggleCheckout(forceClose) {
+             const overlay = document.getElementById('checkout-overlay');
+             if(forceClose) {
+                 overlay.classList.add('opacity-0');
+                 setTimeout(() => overlay.classList.add('invisible'), 300);
+                 return;
+             }
+             if(cart.length === 0) { showToast("Your cart is empty!"); return; }
+             toggleCart(); // close cart
+             overlay.classList.remove('invisible', 'opacity-0');
+             document.getElementById('checkout-total').textContent = document.getElementById('cart-subtotal').textContent;
+        }
+
+        function processPayment(e) {
+            e.preventDefault();
+            const btn = document.getElementById('pay-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-5 h-5"></i> Processing...`; lucide.createIcons();
+            setTimeout(() => {
+                btn.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i> Order Confirmed!`; lucide.createIcons();
+                showToast("Order Placed Successfully!");
+                cart = []; saveData();
+                setTimeout(() => { toggleCheckout(true); btn.innerHTML = originalText; }, 2000);
+            }, 2000);
+        }
+
+        // --- 10. Utils & Init ---
+        function filterProducts(category) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === category);
+                btn.classList.toggle('text-shivangni-gold', btn.dataset.filter === category);
+                btn.classList.toggle('text-gray-400', btn.dataset.filter !== category);
+            });
+            renderMainGrid(category);
+        }
+
+        function toggleSearch() {
+            const overlay = document.getElementById('search-overlay');
+            if (overlay.classList.contains('invisible')) {
+                overlay.classList.remove('invisible', 'opacity-0');
+                setTimeout(() => document.getElementById('search-input').focus(), 100);
+            } else {
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('invisible'), 300);
+            }
+        }
+        
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const results = document.getElementById('search-results');
+            results.innerHTML = '';
+            if(!query) { document.getElementById('no-results').classList.add('hidden'); return; }
+            const matches = products.filter(p => p.name.toLowerCase().includes(query));
+            if(matches.length) {
+                document.getElementById('no-results').classList.add('hidden');
+                results.innerHTML = matches.map(p => createProductCard(p, true)).join('');
+                lucide.createIcons();
+            } else {
+                document.getElementById('no-results').classList.remove('hidden');
+            }
+        });
+
+        function showToast(msg) {
+             const t = document.createElement('div');
+             t.className = 'toast bg-shivangni-black text-white px-6 py-3 shadow-xl rounded-sm flex items-center gap-3 border-l-4 border-shivangni-gold';
+             t.innerHTML = `<span class="text-sm font-light">${msg}</span>`;
+             document.getElementById('toast-container').appendChild(t);
+             setTimeout(() => t.remove(), 3000);
+        }
+
+        function subscribeNewsletter(e) { e.preventDefault(); showToast("Subscribed to Inner Circle!"); e.target.reset(); }
+
+        // --- Init ---
+        window.addEventListener('scroll', () => {
+             const nav = document.getElementById('navbar');
+             if(window.scrollY > 50) {
+                 nav.classList.add('bg-white/95', 'backdrop-blur-md', 'shadow-sm', 'text-shivangni-black', 'top-0');
+                 nav.classList.remove('md:top-8', 'text-white');
+             } else {
+                 nav.classList.remove('bg-white/95', 'backdrop-blur-md', 'shadow-sm', 'text-shivangni-black', 'top-0');
+                 nav.classList.add('md:top-8', 'text-white');
+             }
+        });
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => document.getElementById('mobile-menu').classList.remove('-translate-x-full'));
+        document.getElementById('close-menu-btn').addEventListener('click', () => document.getElementById('mobile-menu').classList.add('-translate-x-full'));
+
+        lucide.createIcons();
+        renderMainGrid();
+        updateUI();
+        checkCookies();
+    </script>
+</body>
+</html>
